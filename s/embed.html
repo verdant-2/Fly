@@ -1,13 +1,91 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <h1>hold up im loading</h1>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading...</title>
+    <!-- Include your UV proxy scripts. These must be in the correct local directories. -->
     <script src="uv/uv.bundle.js" defer></script>
     <script src="uv/uv.config.js" defer></script>
     <script src="register-sw.js" defer></script>
     <script src="embed.js" defer></script>
+
+    <!-- Basic styling to show a loading message -->
+    <style>
+        body {
+            background-color: #222;
+            color: #fff;
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading message -->
+    <h1>Hold up, I'm loading...</h1>
+    
+    <!-- This script handles the URL from the main page -->
+    <script>
+        // Use a self-executing function to avoid global variables
+        (async function() {
+            let destination = "";
+            try {
+                // Get the URL from the hash part of the window's URL
+                // The main page passed the URL in this format: /s/embed.html#https://example.com
+                destination = new URL(location.hash.slice(1));
+
+                // If no protocol (e.g., "google.com" instead of "https://google.com"),
+                // prepend "https://" to make it a valid URL
+                if (!destination.protocol) {
+                    destination = new URL("https://" + destination.href);
+                }
+            } catch (err) {
+                // Use a standard message box since 'alert' is not a good practice in modern web apps
+                const message = `Bad hash string or bad URL. Got error:\n${err}`;
+                const messageBox = document.createElement('div');
+                messageBox.textContent = message;
+                messageBox.style.cssText = `
+                    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                    background-color: #f44336; color: white; padding: 20px; border-radius: 8px;
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.1); z-index: 100;
+                `;
+                document.body.appendChild(messageBox);
+                
+                console.error(message, err);
+                throw err;
+            }
+
+            // Register the service worker and then open the proxied URL
+            // This is the core logic from your UV proxy setup
+            try {
+                // The registerSW() function is defined in your register-sw.js file
+                await registerSW();
+
+                // Construct the final URL using your UV proxy configuration
+                // window.open() with _self loads the new URL in the current window,
+                // which is the iframe in this case.
+                const proxiedUrl = __uv$config.prefix + __uv$config.encodeUrl(destination.toString());
+                window.open(proxiedUrl, "_self");
+
+            } catch (err) {
+                const message = `Encountered error while registering service worker:\n${err}`;
+                const messageBox = document.createElement('div');
+                messageBox.textContent = message;
+                messageBox.style.cssText = `
+                    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                    background-color: #f44336; color: white; padding: 20px; border-radius: 8px;
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.1); z-index: 100;
+                `;
+                document.body.appendChild(messageBox);
+
+                console.error(message, err);
+            }
+        })();
+    </script>
 </body>
-
-
 </html>
