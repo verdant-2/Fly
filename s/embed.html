@@ -23,6 +23,18 @@
             margin: 0;
             text-align: center;
         }
+        .error-message {
+            background-color: #f44336;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 100;
+        }
     </style>
 </head>
 <body>
@@ -34,30 +46,36 @@
         // Use a self-executing function to avoid global variables
         (async function() {
             let destination = "";
-            try {
-                // Get the URL from the hash part of the window's URL
-                // The main page passed the URL in this format: /s/embed.html#https://example.com
-                destination = new URL(location.hash.slice(1));
+            let urlFromHash = location.hash.slice(1);
+            let errorMessage = null;
 
-                // If no protocol (e.g., "google.com" instead of "https://google.com"),
-                // prepend "https://" to make it a valid URL
-                if (!destination.protocol) {
-                    destination = new URL("https://" + destination.href);
+            if (urlFromHash) {
+                try {
+                    // Get the URL from the hash part of the window's URL
+                    // The main page passed the URL in this format: /s/embed.html#https://example.com
+                    destination = new URL(urlFromHash);
+
+                    // If no protocol (e.g., "google.com" instead of "https://google.com"),
+                    // prepend "https://" to make it a valid URL
+                    if (!destination.protocol) {
+                        destination = new URL("https://" + destination.href);
+                    }
+                } catch (err) {
+                    errorMessage = `Bad URL in hash or bad URL. Got error:\n${err}`;
+                    console.error(errorMessage, err);
                 }
-            } catch (err) {
-                // Use a standard message box since 'alert' is not a good practice in modern web apps
-                const message = `Bad hash string or bad URL. Got error:\n${err}`;
-                const messageBox = document.createElement('div');
-                messageBox.textContent = message;
-                messageBox.style.cssText = `
-                    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-                    background-color: #f44336; color: white; padding: 20px; border-radius: 8px;
-                    box-shadow: 0 4px 8px rgba(0,0,0,0.1); z-index: 100;
-                `;
-                document.body.appendChild(messageBox);
-                
-                console.error(message, err);
-                throw err;
+            } else {
+                 errorMessage = "No URL found. This page is meant to be loaded from Fly.html with a URL.";
+                 console.error(errorMessage);
+            }
+            
+            // If an error occurred, display a user-friendly message and stop execution
+            if (errorMessage) {
+                 const messageBox = document.createElement('div');
+                 messageBox.className = 'error-message';
+                 messageBox.textContent = errorMessage;
+                 document.body.appendChild(messageBox);
+                 return; // Stop further execution
             }
 
             // Register the service worker and then open the proxied URL
@@ -75,12 +93,8 @@
             } catch (err) {
                 const message = `Encountered error while registering service worker:\n${err}`;
                 const messageBox = document.createElement('div');
+                messageBox.className = 'error-message';
                 messageBox.textContent = message;
-                messageBox.style.cssText = `
-                    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-                    background-color: #f44336; color: white; padding: 20px; border-radius: 8px;
-                    box-shadow: 0 4px 8px rgba(0,0,0,0.1); z-index: 100;
-                `;
                 document.body.appendChild(messageBox);
 
                 console.error(message, err);
