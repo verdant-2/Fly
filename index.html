@@ -102,38 +102,36 @@
         const historyForwardButton = document.getElementById('history-forward-button');
         const currentUrlSpan = document.getElementById('current-url');
 
-        // Function to check if a string is a valid URL
+        // Function to check if a string is a valid URL and prepend protocol if needed
         function isValidUrl(string) {
             try {
-                // Prepend 'https://' if no protocol is found to help with validation
-                const fullUrl = string.startsWith('http') ? string : `https://${string}`;
+                // If the string doesn't start with a protocol, assume https
+                const fullUrl = string.startsWith('http://') || string.startsWith('https://') ? string : `https://${string}`;
                 new URL(fullUrl);
-                return true;
+                return fullUrl;
             } catch (e) {
-                return false;
+                return null;
             }
         }
-
+        
         // Function to handle loading the content in the iframe
         function processUrl(url) {
-            if (url === '') {
+            const validUrl = isValidUrl(url);
+            if (!validUrl) {
+                console.log("Please enter a valid URL.");
                 return;
             }
             
-            // Check if the input is a valid URL
-            if (isValidUrl(url)) {
-                // Hide the main search container and show the iframe and toolbar
-                searchContainer.classList.add('hidden');
-                toolbar.classList.remove('hidden');
-                contentIframe.classList.remove('hidden');
-                
-                // Set the iframe source using the hash format
-                contentIframe.src = `/s/embed.html#${encodeURIComponent(url)}`;
-                currentUrlSpan.textContent = url;
-            } else {
-                // If not a valid URL, display a message
-                console.log("Please enter a valid URL.");
-            }
+            // Hide the main search container and show the iframe and toolbar
+            searchContainer.classList.add('hidden');
+            toolbar.classList.remove('hidden');
+            contentIframe.classList.remove('hidden');
+            
+            // This is the core proxy logic you need:
+            // The iframe's source is set to s/embed.html, and the URL to load is
+            // passed in the URL hash (#) for the proxy to read.
+            contentIframe.src = `/s/embed.html#${encodeURIComponent(validUrl)}`;
+            currentUrlSpan.textContent = validUrl;
         }
 
         // Add event listener to the "Go" button
@@ -174,3 +172,4 @@
     </script>
 </body>
 </html>
+
