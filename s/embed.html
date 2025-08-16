@@ -51,15 +51,15 @@
 
             if (urlFromHash) {
                 try {
-                    // Get the URL from the hash part of the window's URL
-                    // The main page passed the URL in this format: /s/embed.html#https://example.com
-                    destination = new URL(urlFromHash);
+                    // Check if the URL has a protocol. If not, assume https.
+                    // This prevents the "Invalid URL" TypeError.
+                    const finalUrl = urlFromHash.startsWith('http://') || urlFromHash.startsWith('https://') 
+                        ? urlFromHash 
+                        : `https://${urlFromHash}`;
+                    
+                    // Create the URL object from the validated string
+                    destination = new URL(finalUrl);
 
-                    // If no protocol (e.g., "google.com" instead of "https://google.com"),
-                    // prepend "https://" to make it a valid URL
-                    if (!destination.protocol) {
-                        destination = new URL("https://" + destination.href);
-                    }
                 } catch (err) {
                     errorMessage = `Bad URL in hash or bad URL. Got error:\n${err}`;
                     console.error(errorMessage, err);
@@ -103,3 +103,4 @@
     </script>
 </body>
 </html>
+
